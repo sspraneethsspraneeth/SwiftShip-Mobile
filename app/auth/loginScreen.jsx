@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Image,
   Modal,
@@ -11,12 +11,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Toast from 'react-native-toast-message'; // ✅ Toast import
+import Toast from 'react-native-toast-message';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 
 import ForgetPass from './ForgetPass';
 import ResetPassword from './ResetPassword';
 import Verification from './Verification';
 import { BASE_URL } from '../../constants/api';
+import { androidClientId } from './utils/key';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -28,6 +33,57 @@ export default function LoginScreen() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId,
+  });
+
+  useEffect(() => {
+  const authenticateWithBackend = async () => {
+    if (response?.type === 'success') {
+      const { accessToken } = response.authentication;
+
+      try {
+        const res = await fetch(`${BASE_URL}/auth/google-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: accessToken }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          await AsyncStorage.setItem('token', data.token);
+          await AsyncStorage.setItem('email', data.user.email);
+          await AsyncStorage.setItem('customerId', data.user.customerId);
+
+          Toast.show({
+            type: 'success',
+            text1: 'Login Successful',
+          });
+
+          router.replace('/dashboard/dashboard');
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Login Failed',
+            text2: data.message || 'Invalid token',
+          });
+        }
+      } catch (err) {
+        console.error('Google login error', err);
+        Toast.show({
+          type: 'error',
+          text1: 'Login Failed',
+          text2: err.message,
+        });
+      }
+    }
+  };
+
+  authenticateWithBackend();
+}, [response]);
+
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -42,7 +98,6 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const response = await fetch(`${BASE_URL}/login`, {
-
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -57,16 +112,16 @@ export default function LoginScreen() {
           text2: data.message || 'Invalid credentials',
         });
       } else {
-        // ✅ Store token & email in AsyncStorage
-  await AsyncStorage.setItem('token', data.token);
-  await AsyncStorage.setItem('email', data.user.email);
-  await AsyncStorage.setItem('customerId', data.user.customerId);
+        await AsyncStorage.setItem('token', data.token);
+        await AsyncStorage.setItem('email', data.user.email);
+        await AsyncStorage.setItem('customerId', data.user.customerId);
+
         Toast.show({
           type: 'success',
           text1: 'Login Successful',
           text2: 'Welcome back!',
         });
-        router.replace('/dashboard/dashboard'); // Redirect to dashboard on successful login
+        router.replace('/dashboard/dashboard');
       }
     } catch (err) {
       Toast.show({
@@ -87,23 +142,19 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Back Arrow */}
       <View style={styles.top}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Logo */}
       <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
 
-      {/* Welcome */}
       <Text style={styles.title}>Welcome Back! 👋</Text>
       <Text style={styles.subtitle}>
         We're glad to see you again. Log in to access your account and explore our latest features.
       </Text>
 
-      {/* Email */}
       <View style={styles.inputWrapper}>
         <View style={styles.inputRow}>
           <Image source={require('../../assets/icons/email.png')} style={styles.inputIcon} />
@@ -119,7 +170,6 @@ export default function LoginScreen() {
         </View>
       </View>
 
-      {/* Password */}
       <View style={styles.inputWrapper}>
         <View style={styles.inputRow}>
           <Image source={require('../../assets/icons/lock.png')} style={styles.inputIcon} />
@@ -137,7 +187,6 @@ export default function LoginScreen() {
         </View>
       </View>
 
-      {/* Remember Me / Forgot */}
       <View style={styles.rememberRow}>
         <View style={styles.rememberMe}>
           <Switch
@@ -153,35 +202,32 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Login Button */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
         <Text style={styles.loginText}>{loading ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
 
-      {/* Divider */}
       <View style={styles.divider}>
         <View style={styles.line} />
         <Text style={styles.or}>Or continue with</Text>
         <View style={styles.line} />
       </View>
 
-      {/* Social Buttons */}
       <View style={styles.socialGroup}>
         <TouchableOpacity style={styles.socialBtn}>
           <Image source={require('../../assets/icons/Apple.png')} style={styles.socialIcon} />
           <Text style={styles.socialText}>Continue With Apple</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.socialBtn}>
-          <Image source={require('../../assets/icons/Google.png')} style={styles.socialIcon} />
-          <Text style={styles.socialText}>Continue With Google</Text>
-        </TouchableOpacity>
+        <TouchableOpacity style={styles.socialBtn} onPress={() => promptAsync()}>
+  <Image source={require('../../assets/icons/Google.png')} style={styles.socialIcon} />
+  <Text style={styles.socialText}>Continue With Google</Text>
+</TouchableOpacity>
+
         <TouchableOpacity style={styles.socialBtn}>
           <Image source={require('../../assets/icons/Facebook.png')} style={styles.socialIcon} />
           <Text style={styles.socialText}>Continue With Facebook</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           Don't have an account?{' '}
@@ -191,7 +237,7 @@ export default function LoginScreen() {
         </Text>
       </View>
 
-      {/* Forget Password Modal */}
+      {/* Modals */}
       <Modal transparent animationType="slide" visible={showForgotModal}>
         <View style={modalStyles.overlay}>
           <View style={modalStyles.popupContainer}>
@@ -205,7 +251,6 @@ export default function LoginScreen() {
         </View>
       </Modal>
 
-      {/* Verification Modal */}
       <Modal transparent animationType="slide" visible={showVerifyModal}>
         <View style={modalStyles.overlay}>
           <View style={modalStyles.popupContainer}>
@@ -223,7 +268,6 @@ export default function LoginScreen() {
         </View>
       </Modal>
 
-      {/* Reset Password Modal */}
       <Modal transparent animationType="slide" visible={showResetModal}>
         <View style={modalStyles.overlay}>
           <View style={modalStyles.popupContainer}>
@@ -233,11 +277,14 @@ export default function LoginScreen() {
         </View>
       </Modal>
 
-      {/* Toast Component Instance */}
       <Toast />
     </View>
   );
 }
+
+
+
+
 
 const styles = StyleSheet.create({
   container: {
