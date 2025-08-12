@@ -1,24 +1,94 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import PrimaryButton from '../../components/PrimaryButton';
+import { useStripe } from '@stripe/stripe-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../../constants/api'; // ✅ Import from constants
 
 const amounts = [10, 50, 100, 150, 200, 250, 300, 350, 450];
 
 export default function TopUpWallet() {
   const router = useRouter();
-  const [selectedAmount, setSelectedAmount] = useState(350); // default
+  const [selectedAmount, setSelectedAmount] = useState(350);
+  const [loading, setLoading] = useState(false);
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+
+  const handleTopUp = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const userId = await AsyncStorage.getItem('userId');
+      console.log('UserId from AsyncStorage:', userId);
+
+      // 1️⃣ Create Payment Intent
+      const res = await fetch(`${BASE_URL}/payment/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          amount: selectedAmount,
+          userId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Payment init failed');
+
+      // 2️⃣ Init Stripe Payment Sheet
+      const init = await initPaymentSheet({
+        merchantDisplayName: 'My App',
+        paymentIntentClientSecret: data.paymentIntent,
+        customerEphemeralKeySecret: data.ephemeralKey,
+        customerId: data.customer,
+        defaultBillingDetails: { name: 'Wallet Top-Up' },
+      });
+
+      if (init.error) throw new Error(init.error.message);
+
+      // 3️⃣ Present Payment Sheet
+      const paymentResult = await presentPaymentSheet();
+      if (paymentResult.error) {
+        throw new Error(paymentResult.error.message);
+      }
+
+      // 4️⃣ On success → Update wallet in backend
+      const walletRes = await fetch(`${BASE_URL}/wallet/transaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId,
+          type: 'credit',
+          amount: selectedAmount,
+          description: 'Wallet Top-Up via Stripe',
+        }),
+      });
+
+      if (!walletRes.ok) {
+        const errData = await walletRes.json();
+        throw new Error(errData.message || 'Failed to update wallet');
+      }
+
+      Alert.alert('✅ Success', `Wallet topped up with $${selectedAmount}`);
+
+      // ✅ Redirect to /wallet/payment after success
+      router.replace('/wallet/payment');
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Payment Error', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.back}>{'←'}</Text>
@@ -26,17 +96,14 @@ export default function TopUpWallet() {
           <Text style={styles.title}>Top Up Wallet</Text>
         </View>
 
-        {/* Subtitle */}
         <Text style={styles.subtitle}>Select the amount of top up</Text>
 
-        {/* Selected Amount Card */}
         <View style={styles.amountCard}>
           <View style={styles.cardBgTopLeft} />
           <View style={styles.cardBgTopRight} />
           <Text style={styles.amountText}>${selectedAmount}</Text>
         </View>
 
-        {/* Amount Grid */}
         <View style={styles.grid}>
           {amounts.map((amount) => (
             <TouchableOpacity
@@ -59,13 +126,15 @@ export default function TopUpWallet() {
           ))}
         </View>
 
-        {/* Spacer */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Continue Button + Below Text */}
       <View style={styles.buttonWrapper}>
-        <PrimaryButton title="Continue" onPress={() => router.push('/wallet/payment')} />
+        <PrimaryButton
+          title={loading ? 'Processing...' : 'Continue'}
+          onPress={handleTopUp}
+          disabled={loading}
+        />
       </View>
     </View>
   );

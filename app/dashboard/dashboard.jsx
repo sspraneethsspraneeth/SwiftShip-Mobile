@@ -15,46 +15,67 @@ import { LinearGradient } from 'expo-linear-gradient';
 import BottomNav from '../../components/BottomNav';
 import { BASE_URL } from '../../constants/api'; // Adjust the path as per file location
 
-
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const email = await AsyncStorage.getItem('email');
-      const token = await AsyncStorage.getItem('token');
+  const fetchUserAndWallet = async () => {
+    const email = await AsyncStorage.getItem('email');
+    const token = await AsyncStorage.getItem('token');
 
-      if (!email || !token) {
-        router.replace('/auth/login');
-        return;
-      }
+    if (!email || !token) {
+      router.replace('/auth/login');
+      return;
+    }
 
-      try {
-        const res = await fetch(`${BASE_URL}/user?email=${email}`, {
+    try {
+      // Fetch user
+      const res = await fetch(`${BASE_URL}/user?email=${email}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUser(data.user);
+
+        // ✅ Save userId for later use in TopUpWallet
+        await AsyncStorage.setItem('userId', data.user._id);
+        const storedId = await AsyncStorage.getItem('userId');
+console.log('Stored userId in AsyncStorage:', storedId);
+
+        // Fetch wallet
+        const walletRes = await fetch(`${BASE_URL}/wallet/${data.user._id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        const data = await res.json();
-        if (res.ok) {
-          setUser(data.user);
+        const walletData = await walletRes.json();
+        if (walletRes.ok) {
+          setWallet(walletData);
         } else {
-          console.error('User fetch error:', data.message);
-          router.replace('/auth/login');
+          console.error('Wallet fetch error:', walletData.message);
         }
-      } catch (err) {
-        console.error('Error fetching user:', err);
+      } else {
+        console.error('User fetch error:', data.message);
         router.replace('/auth/login');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching user/wallet:', err);
+      router.replace('/auth/login');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchUser();
-  }, []);
+  fetchUserAndWallet();
+}, []);
+
 
   if (loading) {
     return (
@@ -124,7 +145,9 @@ export default function Dashboard() {
             <View style={styles.cardBgTopRight} />
             <View style={styles.cardBgBottomLeft} />
             <Text style={styles.cardLabel}>Current Balance</Text>
-            <Text style={styles.cardAmount}>$5,750.20</Text>
+            <Text style={styles.cardAmount}>
+              {wallet ? `$${wallet.balance.toFixed(2)}` : '₹0.00'}
+            </Text>
             <Image
               source={require('../../assets/icons/mastercard.png')}
               style={styles.cardLogo}
@@ -152,7 +175,6 @@ export default function Dashboard() {
             icon={require('../../assets/icons/help.png')}
             label="Help Center"
             onPress={() => router.push('/help/help-center')}
-
           />
           <Service
             icon={require('../../assets/icons/location.png')}
