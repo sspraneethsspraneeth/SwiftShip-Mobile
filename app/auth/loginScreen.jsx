@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Google from 'expo-auth-session/providers/google';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import {
   Image,
@@ -12,14 +14,17 @@ import {
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 
+
+import { BASE_URL } from '../../constants/api';
 import ForgetPass from './ForgetPass';
 import ResetPassword from './ResetPassword';
+import { androidClientId, iosClientId } from './utils/key';
 import Verification from './Verification';
-import { BASE_URL } from '../../constants/api';
-import { androidClientId } from './utils/key';
+
+// Firebase imports
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { auth } from '../firebase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -33,58 +38,60 @@ export default function LoginScreen() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId,
-  });
+  
+const [request, response, promptAsync] = Google.useAuthRequest({
+  androidClientId,
+  iosClientId,
+  useProxy: true,
+});
 
   useEffect(() => {
-  const authenticateWithBackend = async () => {
-    if (response?.type === 'success') {
-      const { accessToken } = response.authentication;
+    const authenticateWithFirebase = async () => {
+      if (response?.type === 'success') {
+        const idToken = response.authentication?.idToken;
 
-      try {
-        const res = await fetch(`${BASE_URL}/auth/google-login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: accessToken }),
-        });
+        if (!idToken) {
+          console.error('No idToken received from Google:', response);
+          Toast.show({
+            type: 'error',
+            text1: 'Google Login Failed',
+            text2: 'No ID token received.',
+          });
+          return;
+        }
 
-        const data = await res.json();
+        const credential = GoogleAuthProvider.credential(idToken);
 
-        if (res.ok) {
-          await AsyncStorage.setItem('token', data.token);
-          await AsyncStorage.setItem('email', data.user.email);
-          await AsyncStorage.setItem('customerId', data.user.customerId);
+        try {
+          const userCred = await signInWithCredential(auth, credential);
+          const firebaseUser = userCred.user;
+          console.log('Firebase user:', firebaseUser);
+
+          await AsyncStorage.setItem('email', firebaseUser.email || '');
+          await AsyncStorage.setItem('uid', firebaseUser.uid);
 
           Toast.show({
             type: 'success',
             text1: 'Login Successful',
+            text2: firebaseUser.email,
           });
 
           router.replace('/dashboard/dashboard');
-        } else {
+        } catch (err) {
+          console.error('Firebase login error', err);
           Toast.show({
             type: 'error',
             text1: 'Login Failed',
-            text2: data.message || 'Invalid token',
+            text2: err.message,
           });
         }
-      } catch (err) {
-        console.error('Google login error', err);
-        Toast.show({
-          type: 'error',
-          text1: 'Login Failed',
-          text2: err.message,
-        });
       }
-    }
-  };
+    };
 
-  authenticateWithBackend();
-}, [response]);
+    authenticateWithFirebase();
+  }, [response]);
 
-
+  // Email/password login
   const handleLogin = async () => {
     if (!email || !password) {
       Toast.show({
@@ -97,15 +104,15 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/login`, {
+      const res = await fetch(`${BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
+      if (!res.ok) {
         Toast.show({
           type: 'error',
           text1: 'Login Failed',
@@ -121,6 +128,7 @@ export default function LoginScreen() {
           text1: 'Login Successful',
           text2: 'Welcome back!',
         });
+
         router.replace('/dashboard/dashboard');
       }
     } catch (err) {
@@ -155,6 +163,7 @@ export default function LoginScreen() {
         We're glad to see you again. Log in to access your account and explore our latest features.
       </Text>
 
+      {/* Email input */}
       <View style={styles.inputWrapper}>
         <View style={styles.inputRow}>
           <Image source={require('../../assets/icons/email.png')} style={styles.inputIcon} />
@@ -170,6 +179,7 @@ export default function LoginScreen() {
         </View>
       </View>
 
+      {/* Password input */}
       <View style={styles.inputWrapper}>
         <View style={styles.inputRow}>
           <Image source={require('../../assets/icons/lock.png')} style={styles.inputIcon} />
@@ -187,6 +197,7 @@ export default function LoginScreen() {
         </View>
       </View>
 
+      {/* Remember/Forgot */}
       <View style={styles.rememberRow}>
         <View style={styles.rememberMe}>
           <Switch
@@ -202,25 +213,30 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Login Button */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
         <Text style={styles.loginText}>{loading ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
 
+      {/* Divider */}
       <View style={styles.divider}>
         <View style={styles.line} />
         <Text style={styles.or}>Or continue with</Text>
         <View style={styles.line} />
       </View>
 
+      {/* Social logins */}
       <View style={styles.socialGroup}>
         <TouchableOpacity style={styles.socialBtn}>
           <Image source={require('../../assets/icons/Apple.png')} style={styles.socialIcon} />
           <Text style={styles.socialText}>Continue With Apple</Text>
         </TouchableOpacity>
+
+        {/* Google Sign-In */}
         <TouchableOpacity style={styles.socialBtn} onPress={() => promptAsync()}>
-  <Image source={require('../../assets/icons/Google.png')} style={styles.socialIcon} />
-  <Text style={styles.socialText}>Continue With Google</Text>
-</TouchableOpacity>
+          <Image source={require('../../assets/icons/Google.png')} style={styles.socialIcon} />
+          <Text style={styles.socialText}>Continue With Google</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.socialBtn}>
           <Image source={require('../../assets/icons/Facebook.png')} style={styles.socialIcon} />
@@ -228,6 +244,7 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           Don't have an account?{' '}
@@ -282,8 +299,7 @@ export default function LoginScreen() {
   );
 }
 
-
-
+// (Styles remain the same)
 
 
 const styles = StyleSheet.create({

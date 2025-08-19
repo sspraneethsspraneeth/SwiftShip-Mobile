@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "679545932117",
+    "project_id": "swiftship-3b2e7",
+    "storage_bucket": "swiftship-3b2e7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:679545932117:android:09e22b2fef496123cec7dc",
+        "android_client_info": {
+          "package_name": "com.praneethhh.swiftship"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "679545932117-16ecrol7al3uuba8r5omeul7g7f0mjai.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.praneethhh.swiftship",
+            "certificate_hash": "c3c8faa9d2eb317106db2feb7fb0a357141f9eb1"
+          }
+        },
+        {
+          "client_id": "679545932117-ch25k4chqgr8ndl70mp47j09s4781cvm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARixoqyTghXIrVdObtXhKA5F0Q7r45dgE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "679545932117-ch25k4chqgr8ndl70mp47j09s4781cvm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

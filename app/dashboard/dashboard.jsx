@@ -146,7 +146,7 @@ console.log('Stored userId in AsyncStorage:', storedId);
             <View style={styles.cardBgBottomLeft} />
             <Text style={styles.cardLabel}>Current Balance</Text>
             <Text style={styles.cardAmount}>
-              {wallet ? `$${wallet.balance.toFixed(2)}` : '₹0.00'}
+              {wallet ? `₹${wallet.balance.toFixed(2)}` : '₹0.00'}
             </Text>
             <Image
               source={require('../../assets/icons/mastercard.png')}
