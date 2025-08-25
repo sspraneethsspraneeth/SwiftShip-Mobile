@@ -21,61 +21,98 @@ export default function Dashboard() {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [formInputs, setFormInputs] = useState({
+    trackId: '',
+  });
+
+  // 🔹 Input fields definition
+  const inputFields = [
+    {
+      key: 'trackId',
+      placeholder: 'Track Id Number',
+      leftIcon: require('../../assets/icons/search1.png'),
+      rightIcon: require('../../assets/icons/sort.png'),
+    },
+  ];
+
+  // 🔹 Services definition
+  const services = [
+    {
+      icon: require('../../assets/icons/order.png'),
+      label: 'Make Order',
+      route: '/order/make-order',
+    },
+    {
+      icon: require('../../assets/icons/price.png'),
+      label: 'Prices',
+      route: '/pricing/pricing',
+    },
+    {
+      icon: require('../../assets/icons/help.png'),
+      label: 'Help Center',
+      route: '/help/help-center',
+    },
+    {
+      icon: require('../../assets/icons/location.png'),
+      label: 'Nearby Drop',
+      route: '/drop/NearbyDrop',
+    },
+  ];
+
   useEffect(() => {
-  const fetchUserAndWallet = async () => {
-    const email = await AsyncStorage.getItem('email');
-    const token = await AsyncStorage.getItem('token');
+    const fetchUserAndWallet = async () => {
+      const email = await AsyncStorage.getItem('email');
+      const token = await AsyncStorage.getItem('token');
 
-    if (!email || !token) {
-      router.replace('/auth/login');
-      return;
-    }
+      if (!email || !token) {
+        router.replace('/auth/login');
+        return;
+      }
 
-    try {
-      // Fetch user
-      const res = await fetch(`${BASE_URL}/user?email=${email}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setUser(data.user);
-
-        // ✅ Save userId for later use in TopUpWallet
-        await AsyncStorage.setItem('userId', data.user._id);
-        const storedId = await AsyncStorage.getItem('userId');
-console.log('Stored userId in AsyncStorage:', storedId);
-
-        // Fetch wallet
-        const walletRes = await fetch(`${BASE_URL}/wallet/${data.user._id}`, {
+      try {
+        // Fetch user
+        const res = await fetch(`${BASE_URL}/user?email=${email}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        const walletData = await walletRes.json();
-        if (walletRes.ok) {
-          setWallet(walletData);
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setUser(data.user);
+
+          // ✅ Save userId for later use in TopUpWallet
+          await AsyncStorage.setItem('userId', data.user._id);
+          const storedId = await AsyncStorage.getItem('userId');
+          console.log('Stored userId in AsyncStorage:', storedId);
+
+          // Fetch wallet
+          const walletRes = await fetch(`${BASE_URL}/wallet/${data.user._id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const walletData = await walletRes.json();
+          if (walletRes.ok) {
+            setWallet(walletData);
+          } else {
+            console.error('Wallet fetch error:', walletData.message);
+          }
         } else {
-          console.error('Wallet fetch error:', walletData.message);
+          console.error('User fetch error:', data.message);
+          router.replace('/auth/login');
         }
-      } else {
-        console.error('User fetch error:', data.message);
+      } catch (err) {
+        console.error('Error fetching user/wallet:', err);
         router.replace('/auth/login');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching user/wallet:', err);
-      router.replace('/auth/login');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchUserAndWallet();
-}, []);
-
+    fetchUserAndWallet();
+  }, []);
 
   if (loading) {
     return (
@@ -113,29 +150,38 @@ console.log('Stored userId in AsyncStorage:', storedId);
           </TouchableOpacity>
         </View>
 
-        {/* Track ID Input Row */}
-        <View style={styles.inputRow}>
-          <TouchableOpacity>
-            <Image
-              source={require('../../assets/icons/search1.png')}
-              style={styles.iconBtn}
+        {/* Input Fields (map) */}
+        {inputFields.map((field) => (
+          <View key={field.key} style={styles.inputRow}>
+            {field.leftIcon && (
+              <TouchableOpacity>
+                <Image source={field.leftIcon} style={styles.iconBtn} />
+              </TouchableOpacity>
+            )}
+
+            <TextInput
+              placeholder={field.placeholder}
+              placeholderTextColor="#aaa"
+              style={styles.trackInput}
+              value={formInputs[field.key]}
+              onChangeText={(text) =>
+                setFormInputs((prev) => ({ ...prev, [field.key]: text }))
+              }
             />
-          </TouchableOpacity>
-          <TextInput
-            placeholder="Track Id Number"
-            placeholderTextColor="#aaa"
-            style={styles.trackInput}
-          />
-          <TouchableOpacity>
-            <Image
-              source={require('../../assets/icons/sort.png')}
-              style={styles.iconBtn}
-            />
-          </TouchableOpacity>
-        </View>
+
+            {field.rightIcon && (
+              <TouchableOpacity>
+                <Image source={field.rightIcon} style={styles.iconBtn} />
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
 
         {/* Gradient Balance Card */}
-        <TouchableOpacity onPress={() => router.push('/wallet/wallet')} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => router.push('/wallet/wallet')}
+          activeOpacity={0.8}
+        >
           <LinearGradient
             colors={['#9C2CF3', '#3A49F9']}
             start={{ x: 0, y: 0 }}
@@ -159,28 +205,16 @@ console.log('Stored userId in AsyncStorage:', storedId);
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Services Grid */}
+        {/* Services Grid (map) */}
         <View style={styles.services}>
-          <Service
-            icon={require('../../assets/icons/order.png')}
-            label="Make Order"
-            onPress={() => router.push('/order/make-order')}
-          />
-          <Service
-            icon={require('../../assets/icons/price.png')}
-            label="Prices"
-            onPress={() => router.push('/pricing/pricing')}
-          />
-          <Service
-            icon={require('../../assets/icons/help.png')}
-            label="Help Center"
-            onPress={() => router.push('/help/help-center')}
-          />
-          <Service
-            icon={require('../../assets/icons/location.png')}
-            label="Nearby Drop"
-            onPress={() => router.push('/drop/NearbyDrop')}
-          />
+          {services.map((item, index) => (
+            <Service
+              key={index}
+              icon={item.icon}
+              label={item.label}
+              onPress={() => router.push(item.route)}
+            />
+          ))}
         </View>
 
         {/* Transaction History */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,9 @@ import {
   TextInput,
   Image,
   ScrollView,
-} from 'react-native';
-import BottomNav from '../../components/BottomNav';
-import { useRouter } from 'expo-router';
+} from "react-native";
+import BottomNav from "../../components/BottomNav";
+import { useRouter } from "expo-router";
 
 const OrderItem = ({ id }) => {
   const router = useRouter();
@@ -23,7 +23,7 @@ const OrderItem = ({ id }) => {
       <View style={styles.card}>
         <View style={styles.left}>
           <Image
-            source={require('../../assets/icons/box.png')}
+            source={require("../../assets/icons/box.png")}
             style={styles.icon}
           />
           <View>
@@ -40,20 +40,26 @@ const OrderItem = ({ id }) => {
 };
 
 export default function Orders() {
-  const [activeTab, setActiveTab] = useState('fromMe');
-  const [searchText, setSearchText] = useState('');
+  const [activeTab, setActiveTab] = useState("fromMe");
+  const [searchText, setSearchText] = useState("");
+
+  // Tabs Config
+  const tabs = [
+    { key: "fromMe", label: "From Me" },
+    { key: "toMe", label: "To Me" },
+  ];
 
   // Sample order data
   const allOrders = [
-    { id: 'VK3728732' },
-    { id: 'AB1234567' },
-    { id: 'XY9999999' },
-    { id: 'VK3728732' },
-    { id: 'LM1010101' },
-    { id: 'VK3728732' },
+    { id: "VK3728732" },
+    { id: "AB1234567" },
+    { id: "XY9999999" },
+    { id: "VK3728732" },
+    { id: "LM1010101" },
+    { id: "VK3728732" },
   ];
 
-  const filteredOrders = allOrders.filter(order =>
+  const filteredOrders = allOrders.filter((order) =>
     order.id.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -68,7 +74,7 @@ export default function Orders() {
         {/* Search */}
         <View style={styles.searchBox}>
           <Image
-            source={require('../../assets/icons/search1.png')}
+            source={require("../../assets/icons/search1.png")}
             style={styles.searchIcon}
           />
           <TextInput
@@ -79,7 +85,7 @@ export default function Orders() {
             onChangeText={setSearchText}
           />
           <Image
-            source={require('../../assets/icons/sort.png')}
+            source={require("../../assets/icons/sort.png")}
             style={styles.filterIcon}
           />
         </View>
@@ -87,42 +93,31 @@ export default function Orders() {
         {/* Show tabs only if not searching */}
         {!isSearching && (
           <View style={styles.tabs}>
-            <TouchableOpacity
-              style={styles.tabWrapper}
-              onPress={() => setActiveTab('fromMe')}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === 'fromMe' && styles.activeTabText,
-                ]}
+            {tabs.map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                style={styles.tabWrapper}
+                onPress={() => setActiveTab(tab.key)}
               >
-                From Me
-              </Text>
-              {activeTab === 'fromMe' && <View style={styles.underline} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.tabWrapper}
-              onPress={() => setActiveTab('toMe')}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === 'toMe' && styles.activeTabText,
-                ]}
-              >
-                To Me
-              </Text>
-              {activeTab === 'toMe' && <View style={styles.underline} />}
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === tab.key && styles.activeTabText,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+                {activeTab === tab.key && <View style={styles.underline} />}
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
         {/* If searching, show result text */}
         {isSearching && (
           <Text style={styles.resultsText}>
-            Results for "<Text style={{ color: '#6C63FF' }}>{searchText}</Text>"
+            Results for{" "}
+            <Text style={{ color: "#6C63FF" }}>{searchText}</Text>
           </Text>
         )}
 
@@ -147,7 +142,7 @@ export default function Orders() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingTop: 40,
   },
   container: {
@@ -156,113 +151,112 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#39335E',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#39335E",
+    textAlign: "center",
     marginBottom: 20,
   },
   searchBox: {
-    flexDirection: 'row',
-    backgroundColor: '#F6F6F6',
+    flexDirection: "row",
+    backgroundColor: "#F6F6F6",
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   searchIcon: {
     width: 18,
     height: 18,
     marginRight: 8,
-    resizeMode: 'contain',
-    tintColor: '#888',
+    resizeMode: "contain",
+    tintColor: "#888",
   },
   filterIcon: {
     width: 16,
     height: 16,
     marginLeft: 8,
-    resizeMode: 'contain',
-    tintColor: '#888',
+    resizeMode: "contain",
+    tintColor: "#888",
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   tabs: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   tabWrapper: {
-    width: '50%',
-    alignItems: 'center',
+    width: "50%",
+    alignItems: "center",
   },
   tabText: {
     paddingVertical: 8,
     fontSize: 14,
-    fontWeight: '500',
-    color: '#888',
+    fontWeight: "500",
+    color: "#888",
   },
   activeTabText: {
-    color: '#6C63FF',
+    color: "#6C63FF",
   },
   underline: {
     marginTop: 4,
     height: 2,
-    width: '100%',
-    backgroundColor: '#6C63FF',
+    width: "100%",
+    backgroundColor: "#6C63FF",
     borderRadius: 2,
   },
   card: {
-    backgroundColor: '#F8F7FF',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: "#F8F7FF",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 14,
     borderRadius: 14,
     marginBottom: 12,
   },
   left: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   icon: {
     width: 38,
     height: 38,
     marginRight: 10,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   orderId: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 14,
-    color: '#39335E',
+    color: "#39335E",
   },
   orderStatus: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
   },
   statusBadge: {
-    backgroundColor: '#D4F8E8',
+    backgroundColor: "#D4F8E8",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 20,
   },
   badgeText: {
-    color: '#1BA672',
+    color: "#1BA672",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   resultsText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#39335E',
+    fontWeight: "700",
+    color: "#39335E",
     marginBottom: 10,
-    fontFamily: 'montserrat',
   },
   noResults: {
-    textAlign: 'center',
-    color: '#999',
+    textAlign: "center",
+    color: "#999",
     marginTop: 20,
     fontSize: 14,
   },

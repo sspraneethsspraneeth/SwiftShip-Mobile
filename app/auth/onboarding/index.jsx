@@ -3,6 +3,7 @@ import { FlatList, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import OnboardingSlide from '../../../components/OnboardingSlide';
+import PrimaryButton from '../../../components/PrimaryButton';
 import { slides } from '../../../constants/onboardingData';
 
 export default function Onboarding() {
@@ -24,23 +25,18 @@ export default function Onboarding() {
     }
   }).current;
 
-  return (
-    <View style={styles.container}>
-      <StatusBar style="dark" backgroundColor="#fff" />
-      
+ return (
+  <View style={styles.container}>
+    <StatusBar style="dark" backgroundColor="#fff" />
+
+    {/* Slides */}
+    <View style={styles.contentContainer}>
       <FlatList
         data={slides}
         ref={flatListRef}
         keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item, index }) => (
-          <OnboardingSlide
-            imageSource={item.imageSource}
-            text={item.text}
-            currentIndex={currentIndex}
-            totalSlides={slides.length}
-            onNext={handleNext}
-            isLast={index === slides.length - 1}
-          />
+        renderItem={({ item }) => (
+          <OnboardingSlide imageSource={item.imageSource} text={item.text} />
         )}
         horizontal
         pagingEnabled
@@ -49,7 +45,26 @@ export default function Onboarding() {
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
       />
     </View>
-  );
+
+    {/* Footer (dots + button together) */}
+    <View style={styles.footerContainer}>
+      <View style={styles.dotsContainer}>
+        {slides.map((_, i) => (
+          <View
+            key={i}
+            style={i === currentIndex ? styles.dotActive : styles.dot}
+          />
+        ))}
+      </View>
+
+      <PrimaryButton
+        title={currentIndex === slides.length - 1 ? 'Next' : 'Next'}
+        onPress={handleNext}
+      />
+    </View>
+  </View>
+);
+
 }
 
 const styles = StyleSheet.create({
@@ -57,4 +72,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  contentContainer: {
+    flex: 1,
+  },
+  footerContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 24,
+    right: 24,
+    alignItems: 'center',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20, // ✅ dots above button
+  },
+  dot: {
+    width: 10,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D9D9D9',
+    marginHorizontal: 4,
+  },
+  dotActive: {
+    width: 20,
+    height: 8,
+    borderRadius: 5,
+    backgroundColor: '#FF9F1C',
+    marginHorizontal: 4,
+  },
 });
+

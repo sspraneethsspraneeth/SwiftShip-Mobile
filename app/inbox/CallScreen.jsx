@@ -1,8 +1,15 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import React from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-const { height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function CallScreen() {
   const { name } = useLocalSearchParams();
@@ -14,23 +21,49 @@ export default function CallScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Background Image */}
       <Image
-        source={require('../../assets/icons/caller.png')} // Replace with your image path
+        source={require("../../assets/icons/caller.png")}
         style={styles.backgroundImage}
       />
 
+      {/* Overlay Content */}
       <View style={styles.overlay}>
-        <Text style={styles.nameText}>{name}</Text>
+        {/* Caller Name */}
+        <Text style={styles.nameText}>{name || "Unknown Caller"}</Text>
+        <Text style={styles.statusText}>Calling...</Text>
 
+        {/* Buttons */}
         <View style={styles.buttonsContainer}>
-          <TouchableOpacity style={[styles.callButton, { backgroundColor: '#FF5B5B' }]} onPress={handleEndCall}>
-            <Image source={require('../../assets/icons/close1.png')} style={styles.icon} />
+          {/* End Call */}
+          <TouchableOpacity
+            style={[styles.callButton, { backgroundColor: "#FF5B5B" }]}
+            onPress={handleEndCall}
+          >
+            <Image
+              source={require("../../assets/icons/close1.png")}
+              style={styles.icon}
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.callButton, { backgroundColor: '#34C759' }]}>
-            <Image source={require('../../assets/icons/micc1.png')} style={styles.icon} />
+
+          {/* Mute Mic */}
+          <TouchableOpacity
+            style={[styles.callButton, { backgroundColor: "#34C759" }]}
+          >
+            <Image
+              source={require("../../assets/icons/micc1.png")}
+              style={styles.icon}
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.callButton, { backgroundColor: '#FFA726' }]}>
-            <Image source={require('../../assets/icons/Volume1.png')} style={styles.icon} />
+
+          {/* Speaker */}
+          <TouchableOpacity
+            style={[styles.callButton, { backgroundColor: "#FFA726" }]}
+          >
+            <Image
+              source={require("../../assets/icons/Volume1.png")}
+              style={styles.icon}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -41,42 +74,52 @@ export default function CallScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'relative',
+    backgroundColor: "#000",
   },
   backgroundImage: {
-    width: '100%',
-    maxWidth:430,
-    height: '100%',
-    maxHeight:932,
-    resizeMode: 'cover',
+    width: width,
+    height: height,
+    resizeMode: "cover",
   },
   overlay: {
-    position: 'absolute',
-    bottom: 60,
-    width: '100%',
-    alignItems: 'center',
+    position: "absolute",
+    bottom: height * 0.1,
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: 20,
   },
   nameText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 30,
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  statusText: {
+    color: "#ddd",
+    fontSize: 16,
+    marginBottom: 40,
   },
   buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 30,
   },
   callButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5, // shadow for android
+    shadowColor: "#000", // shadow for ios
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   icon: {
-    width: 24,
-    height: 24,
-    tintColor: '#fff',
+    width: 28,
+    height: 28,
+    tintColor: "#fff",
   },
 });

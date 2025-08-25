@@ -14,16 +14,40 @@ import BottomNav from '../../components/BottomNav';
 export default function HelpCenter() {
   const router = useRouter();
   const [expanded, setExpanded] = useState(null);
-  const complaintOptions = ['Late Delivery', 'Damaged Package', 'Wrong Address', 'Others'];
-const [selectedComplaint, setSelectedComplaint] = useState('');
-const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState('');
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
-  
+  // Data Arrays
   const faqs = [
-    'How to track my shipment',
-    'How to cancel an order?',
-    'What are the delivery charges?',
-    'What if my package gets damaged?',
+    { q: 'How to track my shipment?', a: 'You can track your shipment using the tracking ID provided in your order details.' },
+    { q: 'How to cancel an order?', a: 'Go to "My Orders", select your order, and tap on cancel.' },
+    { q: 'What are the delivery charges?', a: 'Delivery charges vary depending on the distance and package weight.' },
+    { q: 'What if my package gets damaged?', a: 'You can raise a complaint in this Help Center and we will assist you.' },
+  ];
+
+  const supportOptions = [
+    {
+      icon: require('../../assets/icons/livechat.png'),
+      title: 'Live Chat',
+      subtitle: 'Avg. response time: 2 mins',
+    },
+    {
+      icon: require('../../assets/icons/calll.png'),
+      title: 'Call Us',
+      subtitle: 'Available 24/7',
+    },
+    {
+      icon: require('../../assets/icons/mail.png'),
+      title: 'Email Us',
+      subtitle: 'Support@swiftship.com',
+    },
+  ];
+
+  const complaintOptions = [
+    'Late Delivery',
+    'Damaged Package',
+    'Wrong Address',
+    'Others',
   ];
 
   const handleToggle = (index) => {
@@ -43,90 +67,66 @@ const [dropdownVisible, setDropdownVisible] = useState(false);
 
         {/* FAQs */}
         <Text style={styles.subheading}>Frequently Asked Questions</Text>
-       {faqs.map((question, index) => (
-  <View key={index} style={styles.accordion}>
-    <TouchableOpacity
-      onPress={() => handleToggle(index)}
-      style={styles.accordionHeader}
-    >
-      <Text style={styles.accordionTitle}>{question}</Text>
-      <Text style={styles.accordionArrow}>{expanded === index ? '⌃' : '⌄'}</Text>
-    </TouchableOpacity>
-    {expanded === index && (
-      <Text style={styles.accordionBody}>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sit amet.
-      </Text>
-    )}
-  </View>
-))}
-
+        {faqs.map((item, index) => (
+          <View key={index} style={styles.accordion}>
+            <TouchableOpacity
+              onPress={() => handleToggle(index)}
+              style={styles.accordionHeader}
+            >
+              <Text style={styles.accordionTitle}>{item.q}</Text>
+              <Text style={styles.accordionArrow}>
+                {expanded === index ? '⌃' : '⌄'}
+              </Text>
+            </TouchableOpacity>
+            {expanded === index && (
+              <Text style={styles.accordionBody}>{item.a}</Text>
+            )}
+          </View>
+        ))}
 
         {/* Support Options */}
         <Text style={styles.subheading}>Contact Support</Text>
-
-        <View style={styles.supportCard}>
-          <Image
-            source={require('../../assets/icons/livechat.png')}
-            style={styles.supportIcon}
-          />
-          <View>
-            <Text style={styles.supportTitle}>Live Chat</Text>
-            <Text style={styles.supportSubtitle}>Avg. response time: 2 mins</Text>
+        {supportOptions.map((option, idx) => (
+          <View key={idx} style={styles.supportCard}>
+            <Image source={option.icon} style={styles.supportIcon} />
+            <View>
+              <Text style={styles.supportTitle}>{option.title}</Text>
+              <Text style={styles.supportSubtitle}>{option.subtitle}</Text>
+            </View>
           </View>
-        </View>
-
-        <View style={styles.supportCard}>
-          <Image
-            source={require('../../assets/icons/calll.png')}
-            style={styles.supportIcon}
-          />
-          <View>
-            <Text style={styles.supportTitle}>Call Us</Text>
-            <Text style={styles.supportSubtitle}>Available 24/7</Text>
-          </View>
-        </View>
-
-        <View style={styles.supportCard}>
-          <Image
-            source={require('../../assets/icons/mail.png')}
-            style={styles.supportIcon}
-          />
-          <View>
-            <Text style={styles.supportTitle}>Email US</Text>
-            <Text style={styles.supportSubtitle}>Support@swiftship.com</Text>
-          </View>
-        </View>
+        ))}
 
         {/* Raise Complaint */}
         <Text style={styles.subheading}>Raise a Complaint</Text>
-        <Text style={styles.sectionTitle}>Category</Text>
-<TouchableOpacity
-  style={styles.dropdown}
-  onPress={() => setDropdownVisible(!dropdownVisible)}
-  activeOpacity={0.8}
->
-  <Text style={styles.dropdownText}>
-    {selectedComplaint || 'Select Complaint type'}
-  </Text>
-  <Image
-    source={require('../../assets/icons/arrow-down.png')}
-    style={styles.dropdownArrow}
-  />
-</TouchableOpacity>
 
-{dropdownVisible &&
-  complaintOptions.map((option, idx) => (
-    <TouchableOpacity
-      key={idx}
-      style={styles.dropdownItem}
-      onPress={() => {
-        setSelectedComplaint(option);
-        setDropdownVisible(false);
-      }}
-    >
-      <Text style={styles.dropdownItemText}>{option}</Text>
-    </TouchableOpacity>
-  ))}
+        <Text style={styles.sectionTitle}>Category</Text>
+        <TouchableOpacity
+          style={styles.dropdown}
+          onPress={() => setDropdownVisible(!dropdownVisible)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.dropdownText}>
+            {selectedComplaint || 'Select Complaint type'}
+          </Text>
+          <Image
+            source={require('../../assets/icons/arrow-down.png')}
+            style={styles.dropdownArrow}
+          />
+        </TouchableOpacity>
+
+        {dropdownVisible &&
+          complaintOptions.map((option, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.dropdownItem}
+              onPress={() => {
+                setSelectedComplaint(option);
+                setDropdownVisible(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{option}</Text>
+            </TouchableOpacity>
+          ))}
 
         <Text style={styles.sectionTitle}>Order ID (Optional)</Text>
         <TextInput
@@ -134,6 +134,7 @@ const [dropdownVisible, setDropdownVisible] = useState(false);
           placeholder="LP-12345"
           placeholderTextColor="#bbb"
         />
+
         <Text style={styles.sectionTitle}>Message</Text>
         <TextInput
           style={[styles.input, { height: 100 }]}
@@ -141,11 +142,13 @@ const [dropdownVisible, setDropdownVisible] = useState(false);
           placeholderTextColor="#bbb"
           multiline
         />
+
         <TouchableOpacity style={styles.submitBtn}>
           <Text style={styles.submitText}>Submit Complaint</Text>
         </TouchableOpacity>
       </ScrollView>
-       <BottomNav activeTab="Home" />
+
+      <BottomNav activeTab="Home" />
     </View>
   );
 }
@@ -204,16 +207,15 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   accordionHeader: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-accordionArrow: {
-  fontSize: 16,
-  color: '#3A2F66',
-  fontWeight: '600',
-},
-
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  accordionArrow: {
+    fontSize: 16,
+    color: '#3A2F66',
+    fontWeight: '600',
+  },
   supportCard: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
@@ -221,14 +223,14 @@ accordionArrow: {
     padding: 12,
     alignItems: 'center',
     marginBottom: 12,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    borderWidth: 1,
+    borderColor: '#eee',
   },
   supportIcon: {
     width: 40,
     height: 40,
     marginRight: 10,
     resizeMode: 'contain',
-    
   },
   supportTitle: {
     fontSize: 14,
@@ -241,37 +243,36 @@ accordionArrow: {
     color: '#888',
   },
   dropdown: {
-  backgroundColor: '#f1f1f1',
-  padding: 12,
-  borderRadius: 10,
-  marginBottom: 10,
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-dropdownText: {
-  color: '#727272',
-  fontSize: 14,
-  fontWeight: '400',
-},
-dropdownArrow: {
-  width: 10,
-  height: 10,
-  tintColor: '#888',
-},
-dropdownItem: {
-  backgroundColor: '#f9f9f9',
-  padding: 12,
-  borderRadius: 10,
-  marginBottom: 8,
-  borderWidth: 1,
-  borderColor: '#eee',
-},
-dropdownItemText: {
-  fontSize: 14,
-  color: '#333',
-},
-
+    backgroundColor: '#f1f1f1',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    color: '#727272',
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  dropdownArrow: {
+    width: 10,
+    height: 10,
+    tintColor: '#888',
+  },
+  dropdownItem: {
+    backgroundColor: '#f9f9f9',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+  },
   input: {
     backgroundColor: '#f1f1f1',
     padding: 12,

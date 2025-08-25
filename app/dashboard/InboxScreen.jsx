@@ -7,6 +7,12 @@ import ChatInboxScreen from '../inbox/ChatInboxScreen';
 export default function InboxScreen() {
   const [activeTab, setActiveTab] = useState('Call');
 
+  // Define toggle buttons here instead of repeating JSX
+  const tabs = [
+    { key: 'Chat', label: 'Chats' },
+    { key: 'Call', label: 'Call' },
+  ];
+
   return (
     <View style={styles.wrapper}>
       {/* Header */}
@@ -22,23 +28,19 @@ export default function InboxScreen() {
 
       {/* Toggle Buttons */}
       <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={[styles.button, activeTab === 'Chat' && styles.activeButton]}
-          onPress={() => setActiveTab('Chat')}
-        >
-          <Text style={[styles.buttonText, activeTab === 'Chat' && styles.activeButtonText]}>
-            Chats
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, activeTab === 'Call' && styles.activeButton]}
-          onPress={() => setActiveTab('Call')}
-        >
-          <Text style={[styles.buttonText, activeTab === 'Call' && styles.activeButtonText]}>
-            Call
-          </Text>
-        </TouchableOpacity>
+        {tabs.map(tab => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.button, activeTab === tab.key && styles.activeButton]}
+            onPress={() => setActiveTab(tab.key)}
+          >
+            <Text
+              style={[styles.buttonText, activeTab === tab.key && styles.activeButtonText]}
+            >
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* Conditional Content */}
